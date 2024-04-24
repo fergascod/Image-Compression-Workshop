@@ -1,9 +1,12 @@
-import skimage 
+import skimage
+from skimage.color import rgb2gray
 import constriction
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd 
 from math import log2
+
+from dahuffman import HuffmanCodec
 
 def compute_entropy(img):
     values = img.flatten()
@@ -29,7 +32,7 @@ def x_diferences(frame):
     for i in range(frame.shape[0]):
         for j in range(frame.shape[1]):
             if i==0 and j==0:
-                new_frame[i][j] = frame[i][j]
+                new_frame[i][j] = 0
             elif j==0:
                 new_frame[i][j] = frame[i-1][j]
             else:
@@ -60,32 +63,29 @@ def intraframe(frame):
     
     return new_frame
 
-def main():
-    file_path = "doggo.jpeg"
-    img = skimage.io.imread(file_path)
-    
-    # Plot image
-    plt.imshow(img)
-    plt.show()
+def encode_huffman(difs):
+    codec = HuffmanCodec.from_data(difs)
+    return codec.encode(difs)
 
+
+def main(img):
     # Number of bits to store entire image
     print(img.shape)
-    size = img.shape[0]*img.shape[1]*8
+    n_pixels=img.shape[0]*img.shape[1]
+    size = n_pixels*8
 
-    # Plot Red component
-    red = img[:,:,0]
-    plt.imshow(red, cmap='gray')
+    plt.imshow(img, cmap='gray')
     plt.show()
 
-    H=compute_entropy(red)
+    H=compute_entropy(img)
     print(f"The entropy of the values of the image is {H}(bits/pixel)")
 
     # Display histogram
-    plt.hist(red.ravel(), bins=256, histtype='step', color='black')
+    plt.hist(img.ravel(), bins=256, histtype='step', color='black')
     plt.show()
 
-    #difs = red-x_diferences(red)
-    difs = intraframe(red)
+    difs = img-x_diferences(img)
+    # difs = intraframe(img)
     plt.imshow(difs, cmap='gray')
     plt.show()
 
@@ -96,5 +96,24 @@ def main():
     plt.hist(difs.ravel(), bins=256, histtype='step', color='black')
     plt.show()
 
+    # Do huffman encoding of the errors
+    encoded = encode_huffman(difs.ravel())
+    print(f"The encoded errors use {len(encoded)*8} bits which is an average of {len(encoded)*8/n_pixels} (bits/pixel)")
+
 if __name__=="__main__":
-    main()
+
+    # Dog image
+    file_path = "doggo.jpeg"
+    img = skimage.io.imread(file_path)
+    img = rgb2gray(img)
+
+    # Random noise
+    img = np.random.rand(255, 255)*255
+    img = img.astype(np.int16)
+
+    # Gradient image
+    img = np.zeros((255, 255))
+    for i in range(255):
+        img[i,:] = i
+
+    main(img)
