@@ -47,7 +47,6 @@ def x_diferences(frame):
 
 def main(img):
     # Number of bits to store entire image
-    print(np.max(img))
     print(f"The image has {img.shape[0]}x{img.shape[1]} pixels")
     n_pixels=img.shape[0]*img.shape[1]
     size = n_pixels*8
